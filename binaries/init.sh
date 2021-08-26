@@ -3,6 +3,18 @@ printf "\n\nsetting executable permssion to all binaries sh\n\n"
 ls -l /root/binaries/*.sh | awk '{print $9}' | xargs chmod +x
 
 
+export $(cat /root/.env | xargs)
+
+printf "\n\n\nChecking access using aws cli...\n"
+test=$(aws ec2 describe-key-pairs)
+echo $test
+if [ -z "$test" ]
+then
+    printf "\n\n\nFailed access check.\nFix .env variables and try again.\nExit...\n"
+    exit 1
+fi 
+
+
 printf "\nChecking Tanzu plugin...\n"
 
 ISINSTALLED=$(tanzu management-cluster --help)
@@ -64,10 +76,7 @@ while true; do
     esac
 done
 
-export $(cat /root/.env | xargs)
 
-printf "\n\n\n Login into aws using aws-cli using service principal...\n"
-aws cli get-user
 
 
 printf "\nYour available wizards are:\n"

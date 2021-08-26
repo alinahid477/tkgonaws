@@ -8,5 +8,4 @@
 .tanzu
 .ssh
 .kube-tkg
-binaries
 images
