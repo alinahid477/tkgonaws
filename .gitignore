@@ -18,6 +18,7 @@ binaries/*
 !binaries/generate_workload_cluster_config.sh
 !binaries/tkginstall.sh
 !binaries/tkgworkloadwizard.sh
+!binaries/attach_to_tmc.sh
 !binaries/init.sh
 workload-clusters/*
 !workload-clusters/.gitkeep

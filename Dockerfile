@@ -34,9 +34,6 @@ RUN curl -fsSLO https://download.docker.com/linux/static/stable/x86_64/docker-${
                  -C /usr/local/bin docker/docker \
   && rm docker-${DOCKERVERSION}.tgz
 
-# COPY .ssh/id_rsa /root/.ssh/
-# COPY .ssh/known_hosts /root/.ssh/
-# RUN chmod 600 /root/.ssh/id_rsa
 COPY binaries/tanzu-cli-bundle-linux-amd64.tar /tmp/
 RUN cd /tmp && mkdir tanzu \
 	&& tar -xvf tanzu-cli-bundle-linux-amd64.tar -C tanzu/ \

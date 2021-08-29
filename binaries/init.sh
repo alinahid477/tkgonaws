@@ -14,6 +14,33 @@ then
     exit 1
 fi 
 
+printf "\n\nChecking TMC ... \n\n"
+ISTMCEXISTS=$(tmc --help)
+sleep 1
+if [ -z "$ISTMCEXISTS" ]
+then
+    printf "\n\ntmc command does not exist.\n\n"
+    printf "\n\nChecking for binary presence...\n\n"
+    IS_TMC_BINARY_EXISTS=$(ls ~/binaries/ | grep tmc)
+    sleep 2
+    if [ -z "$IS_TMC_BINARY_EXISTS" ]
+    then
+        printf "\n\nBinary does not exist in ~/binaries directory.\n"
+        printf "\nIf you could like to attach the newly created TKG clusters to TMC then please download tmc binary from https://mapbuapj.tmc.cloud.vmware.com/clidownload and place in the ~/binaries directory.\n"
+        printf "\nAfter you have placed the binary file you can, additionally, uncomment the tmc relevant in the Dockerfile.\n\n"
+    else
+        printf "\n\nTMC binary found...\n"
+        printf "\n\nAdjusting Dockerfile\n"
+        sed -i '/COPY binaries\/tmc \/usr\/local\/bin\//s/^# //' ~/Dockerfile
+        sed -i '/RUN chmod +x \/usr\/local\/bin\/tmc/s/^# //' ~/Dockerfile
+        sleep 2
+        printf "\nDONE..\n"
+        printf "\n\nPlease build this docker container again and run.\n"
+        exit 1
+    fi
+else
+    printf "\n\ntmc command found.\n\n"
+fi
 
 printf "\nChecking Tanzu plugin...\n"
 
@@ -82,6 +109,7 @@ done
 printf "\nYour available wizards are:\n"
 echo -e "\t~/binaries/tkginstall.sh"
 echo -e "\t~/binaries/tkgworkloadwizard.sh --help"
+echo -e "\t~/binaries/attach_to_tmc.sh --help"
 
 
 /bin/bash

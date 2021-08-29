@@ -128,34 +128,8 @@ then
         sleep 1m
         printf "\n\nDONE.\n\n\n"
     else
-        ISTMCEXISTS=$(tmc --help)
-        if [[ ! -z $ISTMCEXISTS && ! -z $TMC_CLUSTER_GROUP ]]
-        then
-            printf "\nAttaching cluster to TMC\n"
-            printf "\nChecking existing TMC context..."
-            EXISTING_CONTEXT=$(tmc system context list | awk -v i=2 -v j=1 'FNR == i {print $j}')
-            if [ -z "$EXISTING_CONTEXT" ]
-            then
-                if [ -z "$TMC_CONTEXT" ]
-                then
-                    TMC_CONTEXT=tkgonazure
-                fi
-                printf "\nNo existing context found. TMC Login using context \'$TMC_CONTEXT\'...\n"
-                tmc login --name $TMC_CONTEXT --no-configure
-            else
-                printf "\nContext $EXISTING_CONTEXT found. Using the context...\n"
-                tmc system context use $EXISTING_CONTEXT
-            fi
-            
-            printf "\nTMC Attach..\n"
-            epoc=$(date +%s) 
-            tmc cluster attach --name $CLUSTER_NAME --cluster-group $TMC_CLUSTER_GROUP --output /tmp/attach-file-$epoc.yaml 
-            kubectl config use-context $CLUSTER_NAME-admin@$CLUSTER_NAME
-            kubectl apply -f /tmp/attach-file-$epoc.yaml
-            printf "\nWaiting 1 mins to complete cluster attach\n"
-            sleep 1m
-            printf "\n\nDONE.\n\n\n"
-        fi
+        SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+        source $SCRIPT_DIR/attach_to_tmc.sh -g $TMC_CLUSTER_GROUP -n $CLUSTER_NAME
     fi
     
     
