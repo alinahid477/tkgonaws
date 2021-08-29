@@ -1,5 +1,7 @@
 # Tanzu Kubernetes Grid Wizard for TKGm on AWS
 
+<img src="images/logo.png" alt="Tanzu Kubernetes Grid Wizard (for TKGm on AWS)" width=200 height=220/>
+
 **The aim is to simplify and quick start with TKGm.**
 
 The official documentation of Tanzu Kubernetes Grid (https://docs.vmware.com/en/VMware-Tanzu-Kubernetes-Grid/1.3/vmware-tanzu-kubernetes-grid-13/GUID-index.html) contains a detailed way of provisioning management and workload clusters which requires several plugins installed lots for file manipulations and files may conflict if they are not organised properly.
