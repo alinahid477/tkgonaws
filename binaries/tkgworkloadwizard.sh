@@ -59,7 +59,6 @@ then
 else
     printf "\n\nconfigfile: $configfile"
 
-    AZURE_RESOURCE_GROUP=$(cat $configfile | sed -r 's/[[:alnum:]]+=/\n&/g' | awk -F: '$1=="AZURE_RESOURCE_GROUP"{print $2}' | xargs)
     CLUSTER_NAME=$(cat $configfile | sed -r 's/[[:alnum:]]+=/\n&/g' | awk -F: '$1=="CLUSTER_NAME"{print $2}' | xargs)
     TMC_CLUSTER_GROUP=$(cat $configfile | sed -r 's/[[:alnum:]]+=/\n&/g' | awk -F: '$1=="TMC_CLUSTER_GROUP"{print $2}' | xargs)
     if [ -z "$TMC_CLUSTER_GROUP" ]
@@ -70,10 +69,7 @@ else
             TMC_ATTACH_URL=$(echo "\"$TMC_ATTACH_URL\"")
         fi
     fi    
-    AZ_NSG_NAME=$(echo "$CLUSTER_NAME-node-nsg")
     printf "\n below information were extracted from the file supplied:\n"
-    printf "\nAZURE_RESOURCE_GROUP=$AZURE_RESOURCE_GROUP"
-    printf "\nAZ_NSG_NAME=$AZ_NSG_NAME (derived from cluster name)"
     printf "\nCLUSTER_NAME=$CLUSTER_NAME"
     if [[ ! -z $TMC_ATTACH_URL ]]
     then
@@ -103,15 +99,6 @@ then
     printf "\n\n\n"
 
     sed -i '$ d' $configfile
-
-    printf "Accept vm image azure sku $TKG_PLAN\n\n"
-    az vm image terms accept --publisher vmware-inc --offer tkg-capi --plan $TKG_PLAN --subscription $AZ_SUBSCRIPTION_ID
-    printf "\n\nDONE.\n\n\n"
-
-    printf "Creating NSG in azure\n\n"
-    az network nsg create -g $AZURE_RESOURCE_GROUP -n $AZ_NSG_NAME --tags tkg $CLUSTER_NAME
-    printf "\n\nDONE.\n\n\n"
-
     
 
     printf "Creating k8s cluster from yaml called ~/workload-clusters/$CLUSTER_NAME.yaml\n\n"
