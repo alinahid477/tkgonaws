@@ -1,0 +1,33 @@
+AWS_ACCESS_KEY_ID: <get from management cluster's config~/.tanzu/tkg/clusterconfig/xxxxx.yaml>
+AWS_AMI_ID: <get from management cluster's config~/.tanzu/tkg/clusterconfig/xxxxx.yaml>
+AWS_B64ENCODED_CREDENTIALS: <get from management cluster's config~/.tanzu/tkg/clusterconfig/xxxxx.yaml>
+AWS_NODE_AZ: <get from management cluster's config~/.tanzu/tkg/clusterconfig/xxxxx.yaml>
+AWS_NODE_AZ_1: <get from management cluster's config~/.tanzu/tkg/clusterconfig/xxxxx.yaml>
+AWS_NODE_AZ_2: <get from management cluster's config~/.tanzu/tkg/clusterconfig/xxxxx.yaml>
+AWS_PRIVATE_SUBNET_ID: <get from aws console>
+AWS_PRIVATE_SUBNET_ID_1: <get from aws console>
+AWS_PRIVATE_SUBNET_ID_2: <get from aws console>
+AWS_PUBLIC_SUBNET_ID: <get from aws console>
+AWS_PUBLIC_SUBNET_ID_1: <get from aws console>
+AWS_PUBLIC_SUBNET_ID_2: <get from aws console>
+AWS_REGION: <get from management cluster's config~/.tanzu/tkg/clusterconfig/xxxxx.yaml>
+AWS_SECRET_ACCESS_KEY: <get from management cluster's config~/.tanzu/tkg/clusterconfig/xxxxx.yaml>
+AWS_SESSION_TOKEN: <get from management cluster's config~/.tanzu/tkg/clusterconfig/xxxxx.yaml>
+AWS_SSH_KEY_NAME: <get from aws console>
+AWS_VPC_ID: <get from aws console>
+NAMESPACE: tkg-system
+CLUSTER_CIDR: <get from management cluster's config~/.tanzu/tkg/clusterconfig/xxxxx.yaml>
+SERVICE_CIDR: <get from management cluster's config~/.tanzu/tkg/clusterconfig/xxxxx.yaml>
+CLUSTER_NAME: <get from management cluster's config~/.tanzu/tkg/clusterconfig/xxxxx.yaml>
+CLUSTER_PLAN: <get from management cluster's config~/.tanzu/tkg/clusterconfig/xxxxx.yaml>
+IDENTITY_MANAGEMENT_TYPE: "oidc"
+INFRASTRUCTURE_PROVIDER: aws
+OIDC_IDENTITY_PROVIDER_CLIENT_ID: "<app name from the oidc provider>"
+OIDC_IDENTITY_PROVIDER_CLIENT_SECRET: "<secret from oidc provicer. eg: keycloak>select realm> select app> when access type=confidential grab the secret from ceredential tab >"
+OIDC_IDENTITY_PROVIDER_GROUPS_CLAIM: "<group created in keycloak>"
+OIDC_IDENTITY_PROVIDER_ISSUER_URL: "<issuer url>"
+OIDC_IDENTITY_PROVIDER_NAME: "<name of the provider eg:keycloak>"
+OIDC_IDENTITY_PROVIDER_SCOPES: "email,profile,groups"
+OIDC_IDENTITY_PROVIDER_USERNAME_CLAIM: "<group created in keycloak>"
+CERT_DURATION: 2160h
+CERT_RENEW_BEFORE: 360h
