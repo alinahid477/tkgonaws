@@ -45,8 +45,8 @@ RUN cd /tmp && mkdir tanzu \
 COPY binaries/init.sh /usr/local/init.sh
 RUN chmod +x /usr/local/init.sh
 
-# COPY binaries/tmc /usr/local/bin/
-# RUN chmod +x /usr/local/bin/tmc
+COPY binaries/tmc /usr/local/bin/
+RUN chmod +x /usr/local/bin/tmc
 
 
 ENTRYPOINT [ "/usr/local/init.sh"]

@@ -75,9 +75,10 @@ then
     chmod 777 ~/workload-clusters/tmp.yaml
     while IFS=: read -r key val
     do
-        if [[ $key == *@("AWS"|"CLUSTER_CIDR"|"SERVICE"|"TKG_HTTP_PROXY_ENABLED"|"IDENTITY_MANAGEMENT_TYPE")* ]]
+        if [[ $key == *@("AWS"|"CLUSTER_CIDR"|"SERVICE"|"TKG_HTTP_PROXY_ENABLED"|"IDENTITY_MANAGEMENT_TYPE"|"BASTION_HOST_ENABLED")* ]]
         then
             if [[ "$key" != @("CONTROL_PLANE_MACHINE_TYPE"|"NODE_MACHINE_TYPE") && 
+                "$key" != *@("AWS_ACCESS_KEY_ID"|"AWS_SECRET_ACCESS_KEY"|"AWS_SESSION_TOKEN"|"AWS_AMI_ID"|"AWS_B64ENCODED_CREDENTIALS")* &&
                 "$key" != *@("AWS_PRIVATE_NODE_CIDR"|"AWS_PUBLIC_NODE_CIDR"|"AWS_PRIVATE_SUBNET_ID"|"AWS_PUBLIC_SUBNET_ID"|"AWS_VPC_CIDR"|"AWS_VPC_ID"|"AWS_NODE_AZ")* ]]
             then                
                 printf "$key: $(echo $val | sed 's,^ *,,; s, *$,,')\n" >> ~/workload-clusters/tmp.yaml
@@ -612,6 +613,15 @@ then
     printf "MHC_UNKNOWN_STATUS_TIMEOUT: 5m\n" >> ~/workload-clusters/tmp.yaml
     printf "MHC_FALSE_STATUS_TIMEOUT: 12m\n" >> ~/workload-clusters/tmp.yaml
     printf "ENABLE_AUTOSCALER: \"false\"\n" >> ~/workload-clusters/tmp.yaml
+
+    printf "AWS_SESSION_TOKEN: $AWS_SESSION_TOKEN\n" >> ~/workload-clusters/tmp.yaml
+    printf "AWS_ACCESS_KEY_ID: $AWS_ACCESS_KEY_ID\n" >> ~/workload-clusters/tmp.yaml
+    printf "AWS_SECRET_ACCESS_KEY: $AWS_SECRET_ACCESS_KEY\n" >> ~/workload-clusters/tmp.yaml
+    # printf "AWS_ACCESS_KEY_ID: <encoded:$(echo $AWS_ACCESS_KEY_ID | base64)>\n" >> ~/workload-clusters/tmp.yaml
+    # printf "AWS_SECRET_ACCESS_KEY: <encoded:$(echo $AWS_SECRET_ACCESS_KEY | base64)>\n" >> ~/workload-clusters/tmp.yaml
+    
+
+    sleep 2
 
     mv ~/workload-clusters/tmp.yaml ~/workload-clusters/$CLUSTER_NAME.yaml;
 

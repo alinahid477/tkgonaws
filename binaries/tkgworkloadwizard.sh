@@ -33,15 +33,15 @@ then
     fi
 fi
 
-if [[ ! -z "$clustername" ]]
+if [[ ! -z $clustername ]]
 then
     ISCONFIGEXIST=$(ls ~/workload-clusters/ | grep $clustername)
     if [[ ! -z "$ISCONFIGEXIST" ]]
     then
-        configfile=~/workload-clusters/$(echo "$clustername").yaml
+        configfile=~/workload-clusters/$clustername.yaml
     fi    
 else 
-    ISCONFIGEXIST=$(ls ~/workload-clusters/$configfile)
+    ISCONFIGEXIST=$(ls $configfile)
 fi
 
 
@@ -98,7 +98,7 @@ then
     printf "*********************************************\n"
     printf "\n\n\n"
 
-    sed -i '$ d' $configfile
+    # sed -i '$ d' $configfile
     
 
     printf "Creating k8s cluster from yaml called ~/workload-clusters/$CLUSTER_NAME.yaml\n\n"
