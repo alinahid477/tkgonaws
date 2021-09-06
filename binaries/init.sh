@@ -111,5 +111,6 @@ echo -e "\t~/binaries/tkginstall.sh"
 echo -e "\t~/binaries/tkgworkloadwizard.sh --help"
 echo -e "\t~/binaries/attach_to_tmc.sh --help"
 
+cd ~
 
 /bin/bash
