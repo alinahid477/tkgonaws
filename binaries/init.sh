@@ -26,7 +26,7 @@ then
     if [ -z "$IS_TMC_BINARY_EXISTS" ]
     then
         printf "\n\nBinary does not exist in ~/binaries directory.\n"
-        printf "\nIf you could like to attach the newly created TKG clusters to TMC then please download tmc binary from https://mapbuapj.tmc.cloud.vmware.com/clidownload and place in the ~/binaries directory.\n"
+        printf "\nIf you could like to attach the newly created TKG clusters to TMC then please download tmc binary from https://{orgname}.tmc.cloud.vmware.com/clidownload and place in the ~/binaries directory.\n"
         printf "\nAfter you have placed the binary file you can, additionally, uncomment the tmc relevant in the Dockerfile.\n\n"
     else
         printf "\n\nTMC binary found...\n"
