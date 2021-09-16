@@ -1,4 +1,31 @@
 #!/bin/bash
+
+
+install_tanzu_plugin()
+{
+    printf "\nChecking tanzu unpacked...\n\n"
+    isexists=$(ls /tmp | grep -w "tanzu$")
+    if [[ -z $isexists ]]
+    then
+        printf "\nChecking tanzu cli bundle in ~/binaries...\n"
+        isexists=$(ls /binaries | grep -w "tanzu-cli-bundle-linux-amd64.tar$")
+        if [[ -z $isexists ]]
+        then
+            printf "\nError: Bundle ~/binaries/tanzu-cli-bundle-linux-amd64.tar not found. Exiting..\n"
+            exit
+        fi
+        printf "\nUnpacking...\n"
+        cp ~/binaries/tanzu-cli-bundle-linux-amd64.tar /tmp
+        cd /tmp 
+        mkdir tanzu
+        tar -xvf tanzu-cli-bundle-linux-amd64.tar -C tanzu/
+        cd ~
+    fi
+    cd ~
+    tanzu plugin install --local ~/tmp/tanzu/cli all
+}
+
+
 printf "\n\nsetting executable permssion to all binaries sh\n\n"
 ls -l /root/binaries/*.sh | awk '{print $9}' | xargs chmod +x
 
@@ -48,7 +75,7 @@ ISINSTALLED=$(tanzu management-cluster --help)
 if [[ $ISINSTALLED == *"unknown"* ]]
 then
     printf "\n\ntanzu plugin management-cluster not found. installing...\n"
-    tanzu plugin install management-cluster
+    install_tanzu_plugin
     printf "\n\n"
 fi
 
@@ -56,7 +83,7 @@ ISINSTALLED=$(tanzu cluster --help)
 if [[ $ISINSTALLED == *"unknown"* ]]
 then
     printf "\n\ntanzu plugin cluster not found. installing...\n"
-    tanzu plugin install cluster
+    install_tanzu_plugin
     printf "\n\n"
 fi
 
@@ -64,7 +91,7 @@ ISINSTALLED=$(tanzu login --help)
 if [[ $ISINSTALLED == *"unknown"* ]]
 then
     printf "\n\ntanzu plugin login not found. installing...\n"
-    tanzu plugin install login
+    install_tanzu_plugin
     printf "\n\n"
 fi
 
@@ -72,7 +99,7 @@ ISINSTALLED=$(tanzu kubernetes-release --help)
 if [[ $ISINSTALLED == *"unknown"* ]]
 then
     printf "\n\ntanzu plugin kubernetes-release not found. installing...\n"
-    tanzu plugin install kubernetes-release
+    install_tanzu_plugin
     printf "\n\n"
 fi
 
@@ -80,17 +107,17 @@ ISINSTALLED=$(tanzu pinniped-auth --help)
 if [[ $ISINSTALLED == *"unknown"* ]]
 then
     printf "\n\ntanzu plugin pinniped-auth not found. installing...\n"
-    tanzu plugin install pinniped-auth
+    install_tanzu_plugin
     printf "\n\n"
 fi
 
-ISINSTALLED=$(tanzu alpha --help)
-if [[ $ISINSTALLED == *"unknown"* ]]
-then
-    printf "\n\ntanzu optional plugin alpha not found. installing...\n"
-    tanzu plugin install alpha
-    printf "\n\n"
-fi
+# ISINSTALLED=$(tanzu alpha --help)
+# if [[ $ISINSTALLED == *"unknown"* ]]
+# then
+#     printf "\n\ntanzu optional plugin alpha not found. installing...\n"
+#     tanzu plugin install alpha
+#     printf "\n\n"
+# fi
 
 tanzu plugin list
 
