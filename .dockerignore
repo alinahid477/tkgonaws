@@ -9,3 +9,5 @@
 .ssh
 .kube-tkg
 images
+.config
+.cache
