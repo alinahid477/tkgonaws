@@ -1,5 +1,7 @@
 # Tanzu Kubernetes Grid Wizard for TKGm on AWS
 
+***This repo is a part of Merlin initiative (https://github.com/alinahid477/merlin)***
+
 <img src="images/logo.png" alt="Tanzu Kubernetes Grid Wizard (for TKGm on AWS)" width=200 height=210/>
 
 **The aim is to simplify and quick start with TKGm.**
