@@ -6,17 +6,17 @@
 
 **The aim is to simplify and quick start with TKGm.**
 
-The official documentation of Tanzu Kubernetes Grid (https://docs.vmware.com/en/VMware-Tanzu-Kubernetes-Grid/1.3/vmware-tanzu-kubernetes-grid-13/GUID-index.html) contains a detailed way of provisioning management and workload clusters which requires several plugins installed lots for file manipulations and files may conflict if they are not organised properly.
+The official documentation of Tanzu Kubernetes Grid (https://docs.vmware.com/en/VMware-Tanzu-Kubernetes-Grid/1.4/vmware-tanzu-kubernetes-grid-14/GUID-index.html) contains a detailed way of provisioning management and workload clusters which requires several plugins installed lots for file manipulations and files may conflict if they are not organised properly.
 
 This docker container is a bootstrapped way for achieving the same but a lot simpler. eg: You don't need to install anything on your host machine. Infact, you dont need to install anything. This bootstrapped docker takes care of all the installation prerequisits. It also helps with organising the files location (*eg: Per management cluster and all of its workload cluster you can have one instance of this docker.*)
 
 The bootstrap environment comes with the below pre-installed and some handy wizards to create management and workload clusters and attach clusters to tmc
-- aws cli
-- kubectl
-- tmc cli (optional)
-- tkginstall --> lets you create TKG on azure with UI.
-- tkgworkloadwizard --> lets you create TKG Workload cluster with simple prompts.
-- attact_to_tmc --> lets you attach cluster to Tanzu Mission Control
+- **aws cli**
+- **kubectl**
+- **tmc cli (optional)**
+- **tkginstall --> lets you create TKG on azure with UI.**
+- **tkgworkloadwizard --> lets you create TKG Workload cluster with simple prompts.**
+- **attact_to_tmc --> lets you attach cluster to Tanzu Mission Control**
 
 
 ## Pre-Requisites
@@ -26,10 +26,7 @@ You need to have docker-ce or docker-ee on host machine.
 
 ### Tanzu CLI binary bundle
 
-Official documentation: 
-https://docs.vmware.com/en/VMware-Tanzu-Kubernetes-Grid/1.3/vmware-tanzu-kubernetes-grid-13/GUID-install-cli.html
-
-But the above is simplified. All you need to do is to follow below steps:
+Steps:
 - login into https://my.vmware.com
 - then go to https://my.vmware.com/en/group/vmware/downloads/info/slug/infrastructure_operations_management/vmware_tanzu_kubernetes_grid/1_x
 - Navigate to "Go to downloads" for Tanzu Kubernetes Grid
@@ -43,9 +40,6 @@ Download the tmc binary from `https://{yourorg}.tmc.cloud.vmware.com/clidownload
 
 Without the TMC binary the only option is to use the `TMC_ATTACH_URL` if you want to attach k8s to TMC. With this binary in place it will have more embedded experience meaning the cluster entry in TMC will done from here rather than you creating it manually in tmc to generate the attach url.
 
-***if you do not wish to add tmc binary you MUST comment the lines for adding tmc (line #46 #47) from Dockerfile***
-
-
 ### .env file
 
 `mv .env.sample .env`
@@ -55,17 +49,11 @@ Below are the values required:
 - AWS_SECRET_ACCESS_KEY={AWS secret from the above.}
 - AWS_SESSION_TOKEN={optional. incase of using a temporaty access using security token https://awscli.amazonaws.com/v2/documentation/api/latest/reference/sts/assume-role.html}
 - AWS_REGION={aws region name. List here: https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Concepts.RegionsAndAvailabilityZones.html}
-- TKR_VERSION={default `v1.20.4---vmware.3-tkg.1`}
-    - The default value is the latest at the time of writing this. 
-    - This value is used for workload cluster creation using tkgworkloadwizard.sh. 
-    - After you provision the management cluster you can get updated value by running `tanzu kubernetes-release get` and picking a version that is compatible=true and upgradable=true. 
-    - Also adjust the `TKG_PLAN` according to the TKR you pick. 
-    - ***Without right TKR and TKG_PLAN combo you will run into this error `ResourcePurchaseValidationFailed" Message="User failed validation to purchase resources. Error message: 'You have not accepted the legal terms on this subscription: 'xxxxx-xxx-xxx-000-203384034nho' for this plan. Before the subscription can be used, you need to accept the legal terms of the image.`***
 - TMC_API_TOKEN={tmc api token for TMC authentication. If not using TMC leave it empty. Follow below steps to generate a TMC API Token:}
     - Navigate to https://console.cloud.vmware.com/csp/gateway/portal/#/user/profile (OR on tmc console click username at the top right corner > click My Accout)
     - API Tokens tab
     - Generate Token and Record the token value. Keep it in a secret secured location as this is the only time you will have opportunity to record it.
-
+- TMC_CONTEXT=tkgonaws (rename or leave it as it is.)
 
 ## Run / Start
 
@@ -119,14 +107,19 @@ What the wizard will do:
 - Once you have confirmed the configfile on the wizard prompt, it will then proceed to install the workload cluster based on the configfile. This process takes some time (approx 5-15mins depending on the size of the k8s cluster) so grab a coffee or beer or go for a short walk.
 
 
-## TKR_VERSION (bonus) 
+
+# Gotchas
+
+#### TKR_VERSION (bonus) 
 
 Once you get shell access to the docker container, follow the below steps to get latest TKR_VERSION
 
 - run `tanzu kubernetes-release get` to get the Tanzu Kubernetes Release Version (eg: v1.20.4---vmware.3-tkg.1) and record a compatible=true and upgradable=true version. Fill the value in .env file for `TKR_VERSION` field. 
+- This value is used for workload cluster creation using tkgworkloadwizard.sh. 
+- Also adjust the `TKG_PLAN` according to the TKR you pick. 
+- ***Without right TKR and TKG_PLAN combo you will run into this error `ResourcePurchaseValidationFailed" Message="User failed validation to purchase resources. Error message: 'You have not accepted the legal terms on this subscription: 'xxxxx-xxx-xxx-000-203384034nho' for this plan. Before the subscription can be used, you need to accept the legal terms of the image.`***
 
-
-# Enable Identity Management After Management Cluster Deployment (optional)
+#### Enable Identity Management After Management Cluster Deployment (optional)
 
 *You may choose to do this if you have not registered OIDC/LDAP during the management cluster installation time.*
 

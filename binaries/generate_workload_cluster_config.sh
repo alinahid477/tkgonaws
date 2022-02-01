@@ -1,5 +1,29 @@
 #!/bin/bash
 
+
+unset CLUSTER_NAME
+unset CLUSTER_PLAN
+unset AWS_VPC_CIDR
+unset sharedvpc
+unset AWS_PRIVATE_NODE_CIDR
+unset AWS_PRIVATE_SUBNET_ID
+unset AWS_PRIVATE_SUBNET_ID_1
+unset AWS_PRIVATE_SUBNET_ID_2
+unset AWS_PUBLIC_SUBNET_ID
+unset AWS_PUBLIC_NODE_CIDR
+unset AWS_PUBLIC_SUBNET_ID_1
+unset AWS_PUBLIC_NODE_CIDR_1
+unset AWS_PUBLIC_SUBNET_ID_2
+unset AWS_PUBLIC_NODE_CIDR_2
+
+unset AWS_NODE_AZ
+unset AWS_NODE_AZ_1
+unset AWS_NODE_AZ_2
+
+unset CONTROL_PLANE_MACHINE_TYPE
+unset NODE_MACHINE_TYPE
+
+
 while getopts "n:s:" opt
 do
     case $opt in
@@ -8,7 +32,7 @@ do
     esac
 done
 
-if [ -z "$clustername" ]
+if [[ -z $clustername ]]
 then
     printf "\n Error: No cluster name given. Exit...\n"
     exit 1
@@ -34,27 +58,31 @@ then
     exit 1
 fi
 
-printf "\n\nLooking for management cluster config at: ~/.tanzu/tkg/clusterconfigs/\n"
-mgmtconfigfile=$(ls ~/.tanzu/tkg/clusterconfigs/ | awk -v i=1 -v j=1 'FNR == i {print $j}')
 
+printf "\n\nLooking for management cluster config at: ~/.config/tanzu/tkg/clusterconfigs/\n"
+mgmtconfigfile=$(ls ~/.config/tanzu/tkg/clusterconfigs/ | awk -v i=1 -v j=1 'FNR == i {print $j}')
 if [[ -z $mgmtconfigfile ]]
 then
-    printf "\n Error: No management cluster config file found in ~/.tanzu/tkg/clusterconfigs/. Exit...\n"
+    printf "\n Error: No management cluster config file found in ~/.tanzu/tkg/clusterconfigs/.\nGENERATION OF WORKLOAD CLUSTER CONFIG FAILED.\nExit...\n"
     exit 1
 fi
 
 printf "\n\nUsing management cluster config file: $mgmtconfigfile\n"
 
-vpccidr=$(cat ~/.tanzu/tkg/clusterconfigs/$mgmtconfigfile | grep 'AWS_VPC_CIDR' | awk '{print $2}')
-if [[ ! -z $vpccidr ]]
-then
-    printf "\n\nRetrieving VPC ID for CIDR:$vpccidr\n\n"
-    AWS_VPC_ID=$(aws ec2 --output text --query 'Vpcs[*].{VpcId:VpcId}'  describe-vpcs --filters Name=cidr,Values=$vpccidr)
-    printf "\n\nVPC ID for CIRD for $vpccidr is $AWS_VPC_ID\n\n"
+mgmtconfigfile=~/.config/tanzu/tkg/clusterconfigs/$mgmtconfigfile 
+printf "Extracting values from file: $mgmtconfigfile\n"
 
-    printf "\n\nRetrieving Subnet IDs...\n\n"
+vpccidr=$(cat $mgmtconfigfile | grep 'AWS_VPC_CIDR' | awk '{print $2}')
+if [[ -n $vpccidr ]]
+then
+    printf "Extracted vpccidr: $vpccidr\n"
+    printf "\nRetrieving VPC ID for CIDR:$vpccidr..\n"
+    AWS_VPC_ID=$(aws ec2 --output text --query 'Vpcs[*].{VpcId:VpcId}'  describe-vpcs --filters Name=cidr,Values=$vpccidr)
+    printf "\nVPC ID for CIRD for $vpccidr is $AWS_VPC_ID\n"
+
+    printf "\n\nRetrieving Subnet IDs...\n"
     allsubnets=$(aws ec2 --output json --query 'Subnets[*].{SubnetId:SubnetId CidrBlock:CidrBlock Name:Tags[?Key==`Name`].Value|[0]}'  describe-subnets --filters Name=vpc-id,Values=$AWS_VPC_ID)
-    printf "\n\nSubnents associated to the VPC $AWS_VPC_ID are \n$allsubnets\n\n"
+    printf "\nSubnents associated to the VPC $AWS_VPC_ID are \n$allsubnets\n\n"
 
 
     while true; do
@@ -68,9 +96,10 @@ then
 fi
 
 
-if [[ ! -z $mgmtconfigfile ]]
+
+if [[ -n $mgmtconfigfile ]]
 then
-    mgmtconfigfile=~/.tanzu/tkg/clusterconfigs/$mgmtconfigfile 
+
     echo "" > ~/workload-clusters/tmp.yaml
     chmod 777 ~/workload-clusters/tmp.yaml
     while IFS=: read -r key val
@@ -80,7 +109,7 @@ then
             if [[ "$key" != @("CONTROL_PLANE_MACHINE_TYPE"|"NODE_MACHINE_TYPE") && 
                 "$key" != *@("AWS_ACCESS_KEY_ID"|"AWS_SECRET_ACCESS_KEY"|"AWS_SESSION_TOKEN"|"AWS_AMI_ID"|"AWS_B64ENCODED_CREDENTIALS")* &&
                 "$key" != *@("AWS_PRIVATE_NODE_CIDR"|"AWS_PUBLIC_NODE_CIDR"|"AWS_PRIVATE_SUBNET_ID"|"AWS_PUBLIC_SUBNET_ID"|"AWS_VPC_CIDR"|"AWS_VPC_ID"|"AWS_NODE_AZ")* ]]
-            then                
+            then
                 printf "$key: $(echo $val | sed 's,^ *,,; s, *$,,')\n" >> ~/workload-clusters/tmp.yaml
             fi            
         fi
@@ -89,14 +118,14 @@ then
 
         if [[ $key == *"CLUSTER_PLAN"* ]]
         then
-            CLUSTER_PLAN=$(echo $val | sed 's,^ *,,; s, *$,,')
+            CLUSTER_PLAN=$(echo $val | sed 's,^ *,,; s, *$,,' | xargs)
         fi
 
 
         if [[ $key == *"AWS_VPC_CIDR"* && $sharedvpc == "y" ]]
         then
-            AWS_VPC_CIDR=$(echo $val | sed 's,^ *,,; s, *$,,')
-            if [ -z "$AWS_VPC_ID" ]
+            AWS_VPC_CIDR=$(echo $val | sed 's,^ *,,; s, *$,,' | xargs)
+            if [[ -z $AWS_VPC_ID ]]
             then
                 printf "\n Error: No VPC ID for $AWS_VPC_CIDR. Exit...\n"
                 exit 1
@@ -105,7 +134,7 @@ then
 
         if [[ $key == "AWS_PRIVATE_NODE_CIDR" && $sharedvpc == "y" ]]
         then
-            AWS_PRIVATE_NODE_CIDR=$(echo $val | sed 's,^ *,,; s, *$,,')
+            AWS_PRIVATE_NODE_CIDR=$(echo $val | sed 's,^ *,,; s, *$,,' | xargs)
             # printf "\n\nDEBUG: AWS_PRIVATE_NODE_CIDR=====>$AWS_PRIVATE_NODE_CIDR\n\n"
             AWS_PRIVATE_SUBNET_ID=$(echo $allsubnets | jq -c '.[] | select(.CidrBlock == "'$AWS_PRIVATE_NODE_CIDR'") | .SubnetId')
             # printf "\n\nDEBUG: AWS_PRIVATE_SUBNET_ID=====>$AWS_PRIVATE_SUBNET_ID\n\n"
@@ -113,8 +142,8 @@ then
         fi
         if [[ $key == "AWS_PRIVATE_NODE_CIDR_1" && $sharedvpc == "y" ]]
         then
-            AWS_PRIVATE_NODE_CIDR_1=$(echo $val | sed 's,^ *,,; s, *$,,')
-            if [[ ! -n  $AWS_PRIVATE_NODE_CIDR_1 ]]
+            AWS_PRIVATE_NODE_CIDR_1=$(echo $val | sed 's,^ *,,; s, *$,,' | xargs)
+            if [[ -n  $AWS_PRIVATE_NODE_CIDR_1 ]]
             then
                 printf "DEBUG: AWS_PRIVATE_NODE_CIDR_1=====>$AWS_PRIVATE_NODE_CIDR_1"
                 sleep 5
@@ -123,8 +152,8 @@ then
         fi
         if [[ $key == "AWS_PRIVATE_NODE_CIDR_2" && $sharedvpc == "y" ]]
         then
-            AWS_PRIVATE_NODE_CIDR_2=$(echo $val | sed 's,^ *,,; s, *$,,')
-            if [[ ! -n  $AWS_PRIVATE_NODE_CIDR_2 ]]
+            AWS_PRIVATE_NODE_CIDR_2=$(echo $val | sed 's,^ *,,; s, *$,,' | xargs)
+            if [[ -n  $AWS_PRIVATE_NODE_CIDR_2 ]]
             then
                 AWS_PRIVATE_SUBNET_ID_2=$(echo $allsubnets | jq -c '.[] | select(.CidrBlock == "'$AWS_PRIVATE_NODE_CIDR_2'") | .SubnetId')
             fi
@@ -133,21 +162,24 @@ then
 
         if [[ $key == "AWS_PUBLIC_NODE_CIDR" && $sharedvpc == "y" ]]
         then
-            AWS_PUBLIC_NODE_CIDR=$(echo $val | sed 's,^ *,,; s, *$,,')
-            AWS_PUBLIC_SUBNET_ID=$(echo $allsubnets | jq -c '.[] | select(.CidrBlock == "'$AWS_PUBLIC_NODE_CIDR'") | .SubnetId')
+            AWS_PUBLIC_NODE_CIDR=$(echo $val | sed 's,^ *,,; s, *$,,' | xargs)
+            if [[ -n  $AWS_PUBLIC_NODE_CIDR ]]
+            then
+                AWS_PUBLIC_SUBNET_ID=$(echo $allsubnets | jq -c '.[] | select(.CidrBlock == "'$AWS_PUBLIC_NODE_CIDR'") | .SubnetId')
+            fi
         fi
         if [[ $key == "AWS_PUBLIC_NODE_CIDR_1" && $sharedvpc == "y" ]]
         then
             AWS_PUBLIC_NODE_CIDR_1=$(echo $val | sed 's,^ *,,; s, *$,,')
-            if [[ ! -n  $AWS_PUBLIC_NODE_CIDR_1 ]]
+            if [[ -n  $AWS_PUBLIC_NODE_CIDR_1 ]]
             then
                 AWS_PUBLIC_SUBNET_ID_1=$(echo $allsubnets | jq -c '.[] | select(.CidrBlock == "'$AWS_PUBLIC_NODE_CIDR_1'") | .SubnetId')
             fi
         fi
         if [[ $key == "AWS_PUBLIC_NODE_CIDR_2" && $sharedvpc == "y" ]]
         then
-            AWS_PUBLIC_NODE_CIDR_2=$(echo $val | sed 's,^ *,,; s, *$,,')
-            if [[ ! -n  $AWS_PUBLIC_NODE_CIDR_2 ]]
+            AWS_PUBLIC_NODE_CIDR_2=$(echo $val | sed 's,^ *,,; s, *$,,' | xargs)
+            if [[ -n  $AWS_PUBLIC_NODE_CIDR_2 ]]
             then
                 AWS_PUBLIC_SUBNET_ID_2=$(echo $allsubnets | jq -c '.[] | select(.CidrBlock == "'$AWS_PUBLIC_NODE_CIDR_2'") | .SubnetId')
             fi
@@ -159,45 +191,38 @@ then
 
         if [[ $key == "AWS_NODE_AZ" ]]
         then
-            AWS_NODE_AZ=$(echo $val | sed 's,^ *,,; s, *$,,')
+            AWS_NODE_AZ=$(echo $val | sed 's,^ *,,; s, *$,,' | xargs)
         fi
         if [[ $key == "AWS_NODE_AZ_1" ]]
         then
-            AWS_NODE_AZ_1=$(echo $val | sed 's,^ *,,; s, *$,,')
+            AWS_NODE_AZ_1=$(echo $val | sed 's,^ *,,; s, *$,,' | xargs)
         fi
         if [[ $key == "AWS_NODE_AZ_2" ]]
         then
-            AWS_NODE_AZ_2=$(echo $val | sed 's,^ *,,; s, *$,,')
+            AWS_NODE_AZ_2=$(echo $val | sed 's,^ *,,; s, *$,,' | xargs)
         fi
-
-
-
-
-
-
-
 
 
         if [[ $key == *"CONTROL_PLANE_MACHINE_TYPE"* ]]
         then
-            CONTROL_PLANE_MACHINE_TYPE=$(echo $val | sed 's,^ *,,; s, *$,,')
+            CONTROL_PLANE_MACHINE_TYPE=$(echo $val | sed 's,^ *,,; s, *$,,' | xargs)
         fi
 
         if [[ $key == *"NODE_MACHINE_TYPE"* ]]
         then
-            NODE_MACHINE_TYPE=$(echo $val | sed 's,^ *,,; s, *$,,')
+            NODE_MACHINE_TYPE=$(echo $val | sed 's,^ *,,; s, *$,,' | xargs)
         fi
 
 
         # echo "key=$key --- val=$(echo $val | sed 's,^ *,,; s, *$,,')"
     done < "$mgmtconfigfile"
 
-    printf "\n\nFew additional input required\n\n"
+    printf "\n\nFew more additional input required...\n\n"
 
 
     while true; do
         read -p "CLUSTER_NAME:(press enter to keep value extracted from parameter \"$clustername\") " inp
-        if [ -z "$inp" ]
+        if [[ -z $inp ]]
         then
             CLUSTER_NAME=$clustername
         else 
@@ -217,7 +242,7 @@ then
     printf "\n\n"
 
     read -p "CLUSTER_PLAN:(press enter to keep extracted default \"$CLUSTER_PLAN\") " inp
-    if [ -z "$inp" ]
+    if [[ -z $inp ]]
     then
         inp=$CLUSTER_PLAN
     else 
@@ -228,7 +253,7 @@ then
     printf "\n\n"
 
     read -p "AWS_NODE_AZ:(press enter to keep extracted default \"$AWS_NODE_AZ\") " inp
-    if [ -z "$inp" ]
+    if [[ -z $inp ]]
     then
         inp=$AWS_NODE_AZ
     else 
@@ -242,7 +267,7 @@ then
     then
         while true; do
             read -p "type the value for AWS_NODE_AZ_1: " inp
-            if [ -z "$inp" ]
+            if [[ -z $inp ]]
             then
                 printf "\nThis is a required field. You must provide a value."
             else
@@ -251,18 +276,17 @@ then
             fi                
         done
     else
-        if [[ ! -n $AWS_NODE_AZ_1 ]]
+        if [[ -n $AWS_NODE_AZ_1 ]]
         then
             read -p "AWS_NODE_AZ_1:(press enter to keep extracted default \"$AWS_NODE_AZ_1\") " inp
-            if [ -z "$inp" ]
+            if [[ -z $inp ]]
             then
                 inp=$AWS_NODE_AZ_1
             else 
                 AWS_NODE_AZ_1=$inp
             fi
             printf "AWS_NODE_AZ_1: $inp\n" >> ~/workload-clusters/tmp.yaml
-        fi
-        
+        fi        
     fi
     printf "\n\n"
 
@@ -270,7 +294,7 @@ then
     then
         while true; do
             read -p "type the value for AWS_NODE_AZ_2: " inp
-            if [ -z "$inp" ]
+            if [[ -z $inp ]]
             then
                 printf "\nThis is a required field. You must provide a value."
             else
@@ -279,10 +303,10 @@ then
             fi                
         done
     else
-        if [[ ! -n $AWS_NODE_AZ_2 ]]
+        if [[ -n $AWS_NODE_AZ_2 ]]
         then
             read -p "AWS_NODE_AZ_2:(press enter to keep extracted default \"$AWS_NODE_AZ_2\") " inp
-            if [ -z "$inp" ]
+            if [[ -z $inp ]]
             then
                 inp=$AWS_NODE_AZ_2
             else 
@@ -300,7 +324,7 @@ then
             # && 
             # https://docs.aws.amazon.com/vpc/latest/userguide/amazon-vpc-limits.html)
         read -p "AWS_VPC_ID:(press enter to keep extracted default \"$AWS_VPC_ID\") " inp
-        if [ -z "$inp" ]
+        if [[ -z $inp ]]
         then
             inp=$AWS_VPC_ID
         else 
@@ -310,7 +334,7 @@ then
         printf "\n\n"
 
         read -p "AWS_PRIVATE_SUBNET_ID:(press enter to keep extracted default \"$AWS_PRIVATE_SUBNET_ID\") " inp
-        if [ -z "$inp" ]
+        if [[ -z $inp ]]
         then
             inp=$AWS_PRIVATE_SUBNET_ID
         else 
@@ -326,7 +350,7 @@ then
             # WHEN PROD YOU MUST PROVIDE 1
             while true; do
                 read -p "type the value for AWS_PRIVATE_NODE_CIDR_1 or AWS_PRIVATE_SUBNET_ID_1: " inp
-                if [ -z "$inp" ]
+                if [[ -z $inp ]]
                 then
                     printf "\nThis is a required field. You must provide a value.\n"
                 else
@@ -342,7 +366,7 @@ then
             done
         else
             read -p "AWS_PRIVATE_SUBNET_ID_1:(press enter to keep extracted default \"$AWS_PRIVATE_SUBNET_ID_1\") " inp
-            if [ -z "$inp" ]
+            if [[ -z $inp ]]
             then
                 inp=$AWS_PRIVATE_SUBNET_ID_1
             else 
@@ -357,7 +381,7 @@ then
             # WHEN PROD YOU MUST PROVIDE 2
             while true; do
                 read -p "type the value for AWS_PRIVATE_NODE_CIDR_2 or AWS_PRIVATE_SUBNET_ID_2: " inp
-                if [ -z "$inp" ]
+                if [[ -z $inp ]]
                 then
                     printf "\nThis is a required field. You must provide a value.\n"
                 else
@@ -373,7 +397,7 @@ then
             done
         else
             read -p "AWS_PRIVATE_SUBNET_ID_2:(press enter to keep extracted default \"$AWS_PRIVATE_SUBNET_ID_2\") " inp
-            if [ -z "$inp" ]
+            if [[ -z $inp ]]
             then
                 inp=$AWS_PRIVATE_SUBNET_ID_2
             else 
@@ -385,7 +409,7 @@ then
 
 
         read -p "AWS_PUBLIC_SUBNET_ID:(press enter to keep extracted default \"$AWS_PUBLIC_SUBNET_ID\") " inp
-        if [ -z "$inp" ]
+        if [[ -z $inp ]]
         then
             inp=$AWS_PUBLIC_SUBNET_ID
         else 
@@ -400,7 +424,7 @@ then
             # WHEN PROD YOU MUST PROVIDE 1
             while true; do
                 read -p "type the value for AWS_PUBLIC_NODE_CIDR_1 or AWS_PUBLIC_SUBNET_ID_1: " inp
-                if [ -z "$inp" ]
+                if [[ -z $inp ]]
                 then
                     printf "\nThis is a required field. You must provide a value.\n"
                 else
@@ -416,7 +440,7 @@ then
             done
         else
             read -p "AWS_PUBLIC_SUBNET_ID_1:(press enter to keep extracted default \"$AWS_PUBLIC_SUBNET_ID_1\") " inp
-            if [ -z "$inp" ]
+            if [[ -z $inp ]]
             then
                 inp=$AWS_PUBLIC_SUBNET_ID_1
             else 
@@ -431,7 +455,7 @@ then
             # WHEN PROD YOU MUST PROVIDE 2
             while true; do
                 read -p "type the value for AWS_PUBLIC_NODE_CIDR_2 or AWS_PUBLIC_SUBNET_ID_2: " inp
-                if [ -z "$inp" ]
+                if [[ -z $inp ]]
                 then
                     printf "\nThis is a required field. You must provide a value.\n"
                 else
@@ -447,7 +471,7 @@ then
             done
         else
             read -p "AWS_PUBLIC_SUBNET_ID_2:(press enter to keep extracted default \"$AWS_PUBLIC_SUBNET_ID_2\") " inp
-            if [ -z "$inp" ]
+            if [[ -z $inp ]]
             then
                 inp=$AWS_PUBLIC_SUBNET_ID_2
             else 
@@ -460,7 +484,7 @@ then
     # THIS IS CREATING NEW VPC AND SUBNET
         while true; do
             read -p "type the value for AWS_VPC_CIDR: " inp
-            if [ -z "$inp" ]
+            if [[ -z $inp ]]
             then
                 printf "\nThis is a required field. You must provide a value.\n"
             else
@@ -471,7 +495,7 @@ then
         printf "\n\n"
         while true; do
             read -p "type the value for AWS_PRIVATE_NODE_CIDR: " inp
-            if [ -z "$inp" ]
+            if [[ -z $inp ]]
             then
                 printf "\nThis is a required field. You must provide a value.\n"
             else
@@ -485,7 +509,7 @@ then
         # WHEN PROD YOU MUST PROVIDE 1 & 2
             while true; do
                 read -p "type the value for AWS_PRIVATE_NODE_CIDR_1: " inp
-                if [ -z "$inp" ]
+                if [[ -z $inp ]]
                 then
                     printf "\nThis is a required field. You must provide a value.\n"
                 else
@@ -496,7 +520,7 @@ then
             printf "\n\n"
             while true; do
                 read -p "type the value for AWS_PRIVATE_NODE_CIDR_2: " inp
-                if [ -z "$inp" ]
+                if [[ -z $inp ]]
                 then
                     printf "\nThis is a required field. You must provide a value.\n"
                 else
@@ -510,7 +534,7 @@ then
 
         while true; do
             read -p "type the value for AWS_PUBLIC_NODE_CIDR: " inp
-            if [ -z "$inp" ]
+            if [[ -z $inp ]]
             then
                 printf "\nThis is a required field. You must provide a value.\n"
             else
@@ -524,7 +548,7 @@ then
         # WHEN PROD YOU MUST PROVIDE 1 & 2
             while true; do
                 read -p "type the value for AWS_PUBLIC_NODE_CIDR_1: " inp
-                if [ -z "$inp" ]
+                if [[ -z $inp ]]
                 then
                     printf "\nThis is a required field. You must provide a value.\n"
                 else
@@ -535,7 +559,7 @@ then
             printf "\n\n"
             while true; do
                 read -p "type the value for AWS_PUBLIC_NODE_CIDR_2: " inp
-                if [ -z "$inp" ]
+                if [[ -z $inp ]]
                 then
                     printf "\nThis is a required field. You must provide a value.\n"
                 else
@@ -552,7 +576,7 @@ then
     printf "\n\n"
 
     read -p "CONTROL_PLANE_MACHINE_TYPE:(press enter to keep extracted default \"$CONTROL_PLANE_MACHINE_TYPE\") " inp
-    if [ -z "$inp" ]
+    if [[ -z $inp ]]
     then
         inp=$CONTROL_PLANE_MACHINE_TYPE
     fi
@@ -561,7 +585,7 @@ then
     printf "\n\n"
 
     read -p "NODE_MACHINE_TYPE:(press enter to keep extracted default \"$NODE_MACHINE_TYPE\") " inp
-    if [ -z "$inp" ]
+    if [[ -z $inp ]]
     then
         inp=$NODE_MACHINE_TYPE
     fi
@@ -570,7 +594,7 @@ then
     printf "\n\n"
 
     read -p "CONTROL_PLANE_MACHINE_COUNT:(press enter to keep extracted default \"$(if [ $CLUSTER_PLAN == "dev" ] ; then echo "1"; else echo "3"; fi)\") " inp
-    if [ -z "$inp" ]
+    if [[ -z $inp ]]
     then
         if [ $CLUSTER_PLAN == "dev" ] ; then inp=1; else inp=3; fi
     fi
@@ -579,7 +603,7 @@ then
     printf "\n\n"
 
     read -p "WORKER_MACHINE_COUNT:(press enter to keep extracted default \"$(if [ $CLUSTER_PLAN == "dev" ] ; then echo "1"; else echo "3"; fi)\") " inp
-    if [ -z "$inp" ]
+    if [[ -z $inp ]]
     then
         if [ $CLUSTER_PLAN == "dev" ] ; then inp=1; else inp=3; fi
     fi

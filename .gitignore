@@ -5,7 +5,6 @@
 .tanzu
 .local
 .azure
-.ssh
 .vmware-cna-saas
 
 .config
@@ -23,5 +22,9 @@ binaries/*
 !binaries/tkgworkloadwizard.sh
 !binaries/attach_to_tmc.sh
 !binaries/init.sh
+!binaries/tanzu_connect_management.sh
+!binaries/tkgconnect.sh
 workload-clusters/*
 !workload-clusters/.gitkeep
+Dockerfile
+Dockerfile.DELETE

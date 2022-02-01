@@ -90,7 +90,7 @@ else
     done
 fi
 
-if [[ ! -z "$confirmation" ]]
+if [[ -n $confirmation ]]
 then
     printf "\n\n\n"
     printf "*********************************************\n"
@@ -101,8 +101,23 @@ then
     # sed -i '$ d' $configfile
     
 
-    printf "Creating k8s cluster from yaml called ~/workload-clusters/$CLUSTER_NAME.yaml\n\n"
-    tanzu cluster create  --file $configfile -v 9 --tkr $TKR_VERSION # --dry-run > ~/workload-clusters/$CLUSTER_NAME-dryrun.yaml
+    printf "Extracting latest TKR version....\n\n"
+    tanzucontext=$(tanzu config server list -o json | jq '.[].context' | xargs)
+    printf "Tanzu Context: $tanzucontext. Switching kubernetes context...\n"
+    kubectl config use-context $tanzucontext
+    printf "Performing kubectl get tkr ...\n"
+    latesttkrversion=$(kubectl get tkr --sort-by=.metadata.name -o jsonpath='{.items[-1:].metadata.name}' | awk 'NR==1{print $1}')
+    printf "Latest TKR: $latesttkrversion\n"
+
+    read -p "Type in tkr value (OR press enter to accept the default value=$latesttkrversion): " inp
+    if [[ -n $inp ]]
+    then
+        latesttkrversion=$inp
+    fi
+
+
+    printf "Creating k8s cluster from yaml: ~/workload-clusters/$CLUSTER_NAME.yaml\n\n"
+    tanzu cluster create  --file $configfile -v 9 --tkr $latesttkrversion # --dry-run > ~/workload-clusters/$CLUSTER_NAME-dryrun.yaml
     printf "\n\nDONE.\n\n\n"
 
     # printf "applying ~/workload-clusters/$CLUSTER_NAME-dryrun.yaml\n\n"
@@ -117,7 +132,7 @@ then
     tanzu cluster kubeconfig get $CLUSTER_NAME --admin
     printf "\n\nDONE.\n\n\n"
 
-    if [[ ! -z "$TMC_ATTACH_URL" ]]
+    if [[ -n $TMC_ATTACH_URL ]]
     then
         printf "\nAttaching cluster to TMC\n"
         printf "\nSwitching context\n"
